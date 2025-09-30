@@ -12,27 +12,42 @@ const App = () => {
   const Stack = createNativeStackNavigator();
   const [itensCarrinho, setItensCarrinho] = useState([]);
 
-  const addItemToCart = (id) => {
-    const product = getProduct(id);
+  const addItemToCart = async (id) => {
     setItensCarrinho((prevItems) => {
       const item = prevItems.find((item) => item.id == id);
       if (!item) {
-        return [
-          ...prevItems,
-          {
-            id,
-            qty: 1,
-            product,
-          },
-        ];
+        getProduct(id).then((prod) => {
+          setItensCarrinho((prev) => ([
+            ...prev,
+            {
+              id,
+              qty: 1,
+              product: prod,
+            },
+          ]));
+        });
+        return prevItems;
       } else {
         return prevItems.map((item) => {
           if (item.id == id) {
-            item.qty++;
+            return { ...item, qty: item.qty + 1 };
           }
           return item;
         });
       }
+    });
+  };
+
+  const removeItemFromCart = (id) => {
+    setItensCarrinho((prevItems) => {
+      return prevItems
+        .map((item) => {
+          if (item.id == id) {
+            return { ...item, qty: item.qty - 1 };
+          }
+          return item;
+        })
+        .filter((item) => item.qty > 0);
     });
   };
 
@@ -74,7 +89,15 @@ const App = () => {
             headerRight: () => <CartIcon navigation={navigation} getItemsCount={getItemsCount} />,
           })}
         >
-          {(props) => <Cart {...props} items={itensCarrinho} getTotalPrice={getTotalPrice} />}
+          {(props) => (
+            <Cart
+              {...props}
+              items={itensCarrinho}
+              getTotalPrice={getTotalPrice}
+              addItemToCart={addItemToCart}
+              removeItemFromCart={removeItemFromCart}
+            />
+          )}
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
